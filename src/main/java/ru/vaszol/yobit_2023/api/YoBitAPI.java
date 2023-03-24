@@ -117,7 +117,7 @@ public class YoBitAPI {
      * @param pair - пара, например "usd_rur"
      * @return спрос
      */
-    public Rate getRate(String pair) throws IOException {
+    public Rate getDepth(String pair) throws IOException {
         JsonReader reader = getRequest("https://yobit.net/api/3/depth/" + pair + "?limit=2");
 
         Rate rateEntity = new Rate();

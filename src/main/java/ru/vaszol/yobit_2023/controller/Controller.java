@@ -26,18 +26,32 @@ public class Controller {
         return "hello test!!";
     }
 
-    @RequestMapping(value = "getRate", method = RequestMethod.GET)
-    public Rate getRate(@RequestParam String pair) {
+    @RequestMapping(value = "getDepth", method = RequestMethod.GET)
+    public Rate getDepth(@RequestParam String pair) {
         try {
-            Rate rate = yoBitAPI.getRate(pair);
+            Rate rate = yoBitAPI.getDepth(pair);
             return rate;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    @RequestMapping(value = "updatewRate", method = RequestMethod.GET)
-    public Rate updatewRate(@RequestParam String pair) {
-        return yoBitService.updatewRate(pair);
+    @RequestMapping(value = "updateDepth", method = RequestMethod.GET)
+    public Rate updateDepth(@RequestParam String pair) {
+        return yoBitService.updateDepth(pair);
+    }
+
+    @RequestMapping(value = "getInfo", method = RequestMethod.GET)
+    public String getInfo(@RequestParam String pair) {
+        //todo getInfo
+//        return yoBitService.getInfo(pair);
+        return "";
+    }
+
+    @RequestMapping(value = "updateInfo", method = RequestMethod.GET)
+    public String updateInfo(@RequestParam String pair) {
+        //todo updateInfo
+//        return yoBitService.updateInfo(pair);
+        return "";
     }
 }

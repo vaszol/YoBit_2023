@@ -23,9 +23,9 @@ public class YoBitService {
      * @param pair - пара, например "usd_rur"
      * @return спрос
      */
-    public Rate updatewRate(String pair) {
+    public Rate updateDepth(String pair) {
         try {
-            Rate rate = yoBitAPI.getRate(pair);
+            Rate rate = yoBitAPI.getDepth(pair);
             rateRepository.save(rate);
             return rate;
         } catch (IOException e) {
