@@ -43,4 +43,9 @@ public class Controller {
     public Depth updateDepth(@RequestParam String pair) {
         return yoBitService.updateDepth(pair);
     }
+
+    @RequestMapping(value = "getBot", method = RequestMethod.GET)
+    public String getBot() {
+        return yoBitService.getBot();
+    }
 }

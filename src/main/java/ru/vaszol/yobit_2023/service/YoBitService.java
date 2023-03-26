@@ -9,6 +9,7 @@ import ru.vaszol.yobit_2023.repository.DepthPairRepository;
 import ru.vaszol.yobit_2023.repository.InfoPairRepository;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class YoBitService {
@@ -47,5 +48,14 @@ public class YoBitService {
             infoPairRepository.saveAll(info);
         }
         return info.size();
+    }
+
+    public String getBot() {
+        try {
+            TimeUnit.SECONDS.sleep(1);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        return "bot started!";
     }
 }
