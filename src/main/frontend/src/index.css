@@ -6,7 +6,7 @@
 }
 
 body {
-    background: #ffff;
+    background: #acacac;
     color: #222;
     font-family: 'Montserrat', sans-serif;
     font-weight: 300;
@@ -41,18 +41,18 @@ header ul.nav li:hover{
 header .presentation {
     margin: 50px 0;
     width: 100%;
-    height: 500px;
+    height: 200px;
     background-size: cover;
     background-blend-mode: multiply;
     position: relative;
-    background: #bcbcbc url("./img/images.jpg") no-repeat center center;
+    background: #bcbcbc url("img/images.jpg") no-repeat center center;
 
 }
 
 header .presentation::after {
     content: 'Обработчик запросов';
     position: absolute;
-    top: 100px;
+    top: 20px;
     left: 50px;
     width: 300px;
     font-size: 40px;
@@ -63,7 +63,7 @@ header .presentation::after {
 header .presentation::before {
     content: 'test api';
     position: absolute;
-    top: 200px;
+    top: 120px;
     left: 50px;
     width: 300px;
     font-size: 15px;
@@ -73,5 +73,5 @@ header .presentation::before {
 
 footer {
     text-align: center;
-    margin-top: 10px;
+    margin-top: 350px;
 }
