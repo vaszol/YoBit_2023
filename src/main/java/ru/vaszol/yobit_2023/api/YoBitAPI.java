@@ -1,9 +1,11 @@
 package ru.vaszol.yobit_2023.api;
 
 import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import ru.vaszol.yobit_2023.model.Rate;
+import ru.vaszol.yobit_2023.model.InfoPair;
+import ru.vaszol.yobit_2023.model.Depth;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -18,7 +20,7 @@ import java.util.*;
 
 @Service
 public class YoBitAPI {
-    private static final String API_URL = "https://yobit.net/tapi/";
+    private static final String API_URL = "https://yobit.biz/tapi/";
     private static final String HASH_ALGORITHM = "HmacSHA512";
     @Value("${my.property.Sign}")
     private static String Sign;
@@ -112,84 +114,189 @@ public class YoBitAPI {
     public static HashMap<String, ArrayList<String>> sellorders;
     public static HashMap<String, Double> totalfunds;
 
+    /*
+    пуюличное api (Public API)
+     */
+
+    /**
+     * запрос актуальных пар (info)
+     *
+     * @return список пар
+     */
+    public List<InfoPair> getInfo() {
+        JsonReader reader = getRequest("https://yobit.biz/api/3/info/");
+
+        List<InfoPair> result = new LinkedList<>();
+        assert reader != null;
+        try {
+            reader.setLenient(true);
+            while (reader.hasNext()) {
+                JsonToken nextToken = reader.peek();
+                System.out.println("nextToken.name() = " + nextToken.name());
+                if (JsonToken.BEGIN_OBJECT.equals(nextToken)) {
+                    reader.beginObject();
+                } else if (JsonToken.NAME.equals(nextToken)) {
+                    String name = reader.nextName();
+                    switch (name) {
+                        case "error":
+                            System.out.println("reader.nextString() = " + reader.nextString());
+                            while (reader.hasNext()) {
+                                reader.nextName();
+                                reader.skipValue();
+                            }
+                            break;
+                        case "server_time":
+                            double value = reader.nextDouble();
+                            System.out.println("Token Value >>>> " + value);
+                            break;
+                        case "pairs":
+                            JsonToken pairsToken = reader.peek();
+                            if (JsonToken.BEGIN_OBJECT.equals(pairsToken)) {
+                                reader.beginObject();
+                            }
+                            while (reader.hasNext()) {
+                                InfoPair pair = new InfoPair();
+                                pair.setName(reader.nextName());
+                                reader.beginObject();
+                                reader.skipValue();
+                                pair.setDecimal_places(reader.nextDouble());
+                                reader.skipValue();
+                                pair.setMin_price(reader.nextDouble());
+                                reader.skipValue();
+                                pair.setMax_price(reader.nextDouble());
+                                reader.skipValue();
+                                pair.setMin_amount(reader.nextDouble());
+                                reader.skipValue();
+                                pair.setMin_total(reader.nextDouble());
+                                reader.skipValue();
+                                pair.setHidden(reader.nextDouble());
+                                reader.skipValue();
+                                pair.setFee(reader.nextDouble());
+                                reader.skipValue();
+                                pair.setFee_buyer(reader.nextDouble());
+                                reader.skipValue();
+                                pair.setFee_seller(reader.nextDouble());
+                                reader.endObject();
+                                result.add(pair);
+                            }
+                            break;
+                        default:
+                            System.out.println("Token KEY >>>> " + name);
+                            break;
+                    }
+                } else if (JsonToken.STRING.equals(nextToken)) {
+                    String value = reader.nextString();
+                    System.out.println("Token Value >>>> " + value);
+                } else if (JsonToken.NUMBER.equals(nextToken)) {
+                    double value = reader.nextDouble();
+                    System.out.println("Token Value >>>> " + value);
+                } else if (JsonToken.NULL.equals(nextToken)) {
+                    reader.nextNull();
+                    System.out.println("Token Value >>>> null");
+                } else if (JsonToken.END_OBJECT.equals(nextToken)) {
+                    reader.endObject();
+                } else if (JsonToken.END_ARRAY.equals(nextToken)) {
+                    System.out.println("END_ARRAY");
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                reader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return result;
+    }
+
     /**
      * запрос актуального спроса пары
+     *
      * @param pair - пара, например "usd_rur"
      * @return спрос
      */
-    public Rate getDepth(String pair) throws IOException {
-        JsonReader reader = getRequest("https://yobit.net/api/3/depth/" + pair + "?limit=2");
+    public Depth getDepth(String pair) {
+        JsonReader reader = getRequest("https://yobit.biz/api/3/depth/" + pair + "?limit=2");
 
-        Rate rateEntity = new Rate();
-        rateEntity.setPair(pair);
-        rateEntity.setDate(new Date());
+        Depth depthEntity = new Depth();
+        depthEntity.setPair(pair);
+        depthEntity.setDate(new Date());
 
-        reader.beginObject();
+        assert reader != null;
+        try {
+            reader.beginObject();
 
-        while (reader.hasNext()) {
-            String name = reader.nextName();
-            if (name.equals("error")) {
-                System.out.println("reader.nextString() = " + reader.nextString());
-//				Main.doStop(reader.nextString());
-
-                while (reader.hasNext()) {
-                    reader.nextName();
-                    reader.skipValue();
-                }
-            } else if (name.equals(pair)) {
-                reader.beginObject();
-                while (reader.hasNext()) {
-                    name = reader.nextName();
-                    if (name.equals("asks")) {
-                        reader.beginArray();
-                        reader.beginArray();
-                        double r = reader.nextDouble();
-                        if (r != rate) {
-                            rate = r;
-                            rateEntity.setAsk(decimal(rate));
-//							Main.doOutput("Rate is now " + decimal(r));
-//							Main.rateLabel.setText("Rate: " + decimal(rate));
-                        }
-                        while (reader.hasNext()) {
-                            reader.skipValue();
-                        }
-                        reader.endArray();
-                        while (reader.hasNext()) {
-                            reader.skipValue();
-                        }
-                        reader.endArray();
-                    } else if (name.equals("bids")) {
-                        reader.beginArray();
-                        reader.beginArray();
-                        double r = reader.nextDouble();
-                        if (r != rate) {
-                            rate = r;
-                            rateEntity.setBid(decimal(rate));
-//							Main.doOutput("Rate is now " + decimal(r));
-//							Main.rateLabel.setText("Rate: " + decimal(rate));
-                        }
-                        while (reader.hasNext()) {
-                            reader.skipValue();
-                        }
-                        reader.endArray();
-                        while (reader.hasNext()) {
-                            reader.skipValue();
-                        }
-                        reader.endArray();
-                    } else {
+            while (reader.hasNext()) {
+                String name = reader.nextName();
+                if (name.equals("error")) {
+                    System.out.println("reader.nextString() = " + reader.nextString());
+                    while (reader.hasNext()) {
+                        reader.nextName();
                         reader.skipValue();
                     }
+                } else if (name.equals(pair)) {
+                    reader.beginObject();
+                    while (reader.hasNext()) {
+                        name = reader.nextName();
+                        if (name.equals("asks")) {
+                            reader.beginArray();
+                            reader.beginArray();
+                            double r = reader.nextDouble();
+                            if (r != rate) {
+                                rate = r;
+                                depthEntity.setAsk(decimal(rate));
+                            }
+                            while (reader.hasNext()) {
+                                reader.skipValue();
+                            }
+                            reader.endArray();
+                            while (reader.hasNext()) {
+                                reader.skipValue();
+                            }
+                            reader.endArray();
+                        } else if (name.equals("bids")) {
+                            reader.beginArray();
+                            reader.beginArray();
+                            double r = reader.nextDouble();
+                            if (r != rate) {
+                                rate = r;
+                                depthEntity.setBid(decimal(rate));
+                            }
+                            while (reader.hasNext()) {
+                                reader.skipValue();
+                            }
+                            reader.endArray();
+                            while (reader.hasNext()) {
+                                reader.skipValue();
+                            }
+                            reader.endArray();
+                        } else {
+                            reader.skipValue();
+                        }
+                    }
+                    reader.endObject();
+                } else {
+                    reader.skipValue();
                 }
-                reader.endObject();
-            } else {
-                reader.skipValue();
+            }
+            reader.endObject();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                reader.close();
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
-
-        reader.endObject();
-        reader.close();
-        return rateEntity;
+        return depthEntity;
     }
+
+    /*
+    торговое api (Trade API)
+     */
 
 //	public static void getFunds() throws IOException {
 //		funds = new HashMap<String, Double>();

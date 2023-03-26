@@ -3,10 +3,12 @@ package ru.vaszol.yobit_2023.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import ru.vaszol.yobit_2023.api.YoBitAPI;
-import ru.vaszol.yobit_2023.model.Rate;
-import ru.vaszol.yobit_2023.repository.RateRepository;
+import ru.vaszol.yobit_2023.model.Depth;
+import ru.vaszol.yobit_2023.model.InfoPair;
+import ru.vaszol.yobit_2023.repository.DepthPairRepository;
+import ru.vaszol.yobit_2023.repository.InfoPairRepository;
 
-import java.io.IOException;
+import java.util.List;
 
 @Service
 public class YoBitService {
@@ -15,21 +17,35 @@ public class YoBitService {
     private YoBitAPI yoBitAPI;
 
     @Autowired
-    private RateRepository rateRepository;
+    private DepthPairRepository depthPairRepository;
+
+    @Autowired
+    private InfoPairRepository infoPairRepository;
 
     /**
      * запрос актуального спроса пары
-     * созранение спроса пары в БД
+     * сохранение спроса пары в БД
+     *
      * @param pair - пара, например "usd_rur"
      * @return спрос
      */
-    public Rate updateDepth(String pair) {
-        try {
-            Rate rate = yoBitAPI.getDepth(pair);
-            rateRepository.save(rate);
-            return rate;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    public Depth updateDepth(String pair) {
+        Depth depth = yoBitAPI.getDepth(pair);
+        depthPairRepository.save(depth);
+        return depth;
+    }
+
+    /**
+     * запрос актуальных пар (info)
+     * обновление пар в БД
+     *
+     * @return количество пар
+     */
+    public int updateInfo() {
+        List<InfoPair> info = yoBitAPI.getInfo();
+        if (!info.isEmpty()) {
+            infoPairRepository.saveAll(info);
         }
+        return info.size();
     }
 }
